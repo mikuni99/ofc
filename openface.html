@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>Open Face Chinese Poker スコア計算</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f4f4f4;
+    }
+    h1 {text-align:center;}
+    table {border-collapse: collapse; margin: 10px auto;}
+    td, th {
+      border: 1px solid #ccc;
+      padding: 4px 8px;
+      text-align: center;
+    }
+    input[type="text"] {
+      width: 140px;
+    }
+    .container {background:white; padding:20px; border-radius:6px;}
+    #result {margin-top:20px;}
+    .role {
+      font-size: 0.9em;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Open Face Chinese Poker スコア計算</h1>
+    <p>カードは半角スペース区切りで入力 (例: "Ah Kd Qs Jc 9h")。<br>
+      スートは c♣, d♦, h♥, s♠ を c,d,h,s で表記、ランクは 2-9,T,J,Q,K,A。</p>
+
+    <table id="input-table">
+      <thead>
+        <tr>
+          <th>Player</th>
+          <th>Top (3枚)</th>
+          <th>Middle (5枚)</th>
+          <th>Bottom (5枚)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th><input type="text" value="Player1" class="name" /></th>
+          <td><input type="text" class="top" /></td>
+          <td><input type="text" class="middle" /></td>
+          <td><input type="text" class="bottom" /></td>
+        </tr>
+        <tr>
+          <th><input type="text" value="Player2" class="name" /></th>
+          <td><input type="text" class="top" /></td>
+          <td><input type="text" class="middle" /></td>
+          <td><input type="text" class="bottom" /></td>
+        </tr>
+        <tr>
+          <th><input type="text" value="Player3" class="name" /></th>
+          <td><input type="text" class="top" /></td>
+          <td><input type="text" class="middle" /></td>
+          <td><input type="text" class="bottom" /></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <button id="calc-btn">計算</button>
+
+    <div id="result"></div>
+  </div>
+
+<script>
+(() => {
+  const RANK_ORDER = "23456789TJQKA";
+  const RANK_VAL = Object.fromEntries([...RANK_ORDER].map((c,i) => [c, i]));
+
+  function parseCards(str) {
+    const cards = str.trim().split(/\s+/).filter(Boolean);
+    return cards.map(c => ({rank: c[0]?.toUpperCase(), suit: c[1]?.toLowerCase()}));
+  }
+
+  /* ------------------ Top Row (3枚) evaluation ------------------ */
+  function evalTop(cards) {
+    if (cards.length !== 3) throw new Error("Top row は3枚です");
+    const ranks = cards.map(c => c.rank);
+    const counts = countBy(ranks);
+    let category, royalty = 0, scoreDetails="";
+
+    const pairs = Object.values(counts).filter(v => v===2).length;
+    const trips = Object.values(counts).filter(v => v===3).length;
+
+    if (trips) {
+      category = 3;
+      royalty = 10 + RANK_VAL[Object.keys(counts).find(r=>counts[r]===3)];
+      scoreDetails = `Trips ${Object.keys(counts).find(r=>counts[r]===3)}`;
+    } else if (pairs) {
+      category = 2;
+      const pairRank = Object.keys(counts).find(r=>counts[r]===2);
+      const pairVal = RANK_VAL[pairRank];
+      royalty = Math.max(pairVal - 3, 0); // Pair 6 starts at 1pt; 6's index=4 => 4-3=1
+      scoreDetails = `Pair of ${pairRank}`;
+    } else {
+      category = 1;
+      royalty = 0;
+      scoreDetails = "High Card";
+    }
+
+    return {category, ranks: ranks.map(r=>RANK_VAL[r]).sort((a,b)=>b-a), royalty, name:scoreDetails};
+  }
+
+  /* ------------------ 5-card hand evaluation ------------------ */
+  function evalFive(cards) {
+    if (cards.length !== 5) throw new Error("5枚ハンドが必要です");
+    const ranks = cards.map(c => RANK_VAL[c.rank]).sort((a,b)=>b-a);
+    const suits = cards.map(c => c.suit);
+    const isFlush = suits.every(s => s===suits[0]);
+    const isStraight = ranks.every((v,i)=> i===0 || v===ranks[i-1]-1) || (ranks.toString()==="12,3,2,1,0"); // wheel
+
+    const counts = countBy(cards.map(c=>c.rank));
+    const duplicates = Object.values(counts).sort((a,b)=>b-a);
+
+    let category, name="";
+    if (isStraight && isFlush) {
+      category = 8;
+      name = ranks[0]===12?"Royal Flush":"Straight Flush";
+    } else if (duplicates[0]===4) {
+      category = 7; name = "Four of a Kind";
+    } else if (duplicates[0]===3 && duplicates[1]===2) {
+      category = 6; name = "Full House";
+    } else if (isFlush) {
+      category = 5; name = "Flush";
+    } else if (isStraight) {
+      category = 4; name = "Straight";
+    } else if (duplicates[0]===3) {
+      category = 3; name = "Three of a Kind";
+    } else if (duplicates[0]===2 && duplicates[1]===2) {
+      category = 2; name = "Two Pair";
+    } else if (duplicates[0]===2) {
+      category = 1; name = "One Pair";
+    } else {
+      category = 0; name = "High Card";
+    }
+
+    return {category, ranks, royalty:0, name};
+  }
+
+  function countBy(arr) {
+    return arr.reduce((acc,v)=>{acc[v]=(acc[v]||0)+1;return acc;},{});
+  }
+
+  /* ------ Royalties for middle/bottom ------ */
+  function royaltyBottom(cat) {
+    switch(cat.name){
+      case "Straight": return 2;
+      case "Flush": return 4;
+      case "Full House": return 6;
+      case "Four of a Kind": return 10;
+      case "Straight Flush": return 15;
+      case "Royal Flush": return 25;
+      default: return 0;
+    }
+  }
+  function royaltyMiddle(cat) {
+    // doubled vs bottom, except quads+ scaled
+    switch(cat.name){
+      case "Straight": return 4;
+      case "Flush": return 8;
+      case "Full House": return 12;
+      case "Four of a Kind": return 20;
+      case "Straight Flush": return 30;
+      case "Royal Flush": return 50;
+      default: return 0;
+    }
+  }
+
+  function compareHands(a, b) {
+    if (a.category !== b.category) return Math.sign(a.category - b.category);
+    for (let i=0;i<Math.min(a.ranks.length,b.ranks.length);i++){
+      if (a.ranks[i] !== b.ranks[i]) return Math.sign(a.ranks[i]-b.ranks[i]);
+    }
+    return 0; // tie
+  }
+
+  function calcScores(players) {
+    const n = players.length;
+    const diffMatrix = Array.from({length:n},()=>Array(n).fill(0));
+
+    for(let i=0;i<n;i++){
+      for(let j=i+1;j<n;j++){
+        let diff=0;
+        let iRowWins=0, jRowWins=0;
+        ["top","middle","bottom"].forEach(row=>{
+          const a = players[i][row];
+          const b = players[j][row];
+          const cmp = compareHands(a,b);
+          if (cmp>0){ diff+=1; iRowWins++; }
+          else if (cmp<0){ diff-=1; jRowWins++; }
+          // royalties difference
+          diff += (a.royalty - b.royalty);
+        });
+        if (iRowWins===3) diff+=3;
+        if (jRowWins===3) diff-=3;
+        diffMatrix[i][j]=diff;
+        diffMatrix[j][i]=-diff;
+      }
+    }
+    return diffMatrix;
+  }
+
+  function handleCalc(){
+    const rows = Array.from(document.querySelectorAll("#input-table tbody tr"));
+    const players = [];
+    try {
+      for(const tr of rows){
+        const name = tr.querySelector(".name").value || "Player";
+        const topStr = tr.querySelector(".top").value;
+        const midStr = tr.querySelector(".middle").value;
+        const botStr = tr.querySelector(".bottom").value;
+        if(!topStr && !midStr && !botStr) continue; // skip empty row
+        const topEval = evalTop(parseCards(topStr));
+        const midEval = evalFive(parseCards(midStr));
+        midEval.royalty = royaltyMiddle(midEval);
+        const botEval = evalFive(parseCards(botStr));
+        botEval.royalty = royaltyBottom(botEval);
+        players.push({name, top:topEval, middle:midEval, bottom:botEval});
+      }
+      if(players.length<2){ alert("最低2人分入力してください"); return; }
+    } catch(e){ alert(e.message); return; }
+
+    const diffMatrix = calcScores(players);
+    renderResult(players, diffMatrix);
+  }
+
+  function renderResult(players, diffMatrix){
+    let html = "<h2>結果</h2><table><thead><tr><th></th>";
+    players.forEach(p=>{html += `<th>${p.name}</th>`;});
+    html += "</tr></thead><tbody>";
+    players.forEach((p,i)=>{
+      html += `<tr><th>${p.name}</th>`;
+      players.forEach((_,j)=>{
+        if(i===j) html+="<td>-</td>";
+        else html+=`<td>${diffMatrix[i][j]}</td>`;
+      });
+      html +="</tr>";
+    });
+    html += "</tbody></table>";
+
+    // Details
+    html += "<h3>役ボーナス詳細</h3><ul>";
+    players.forEach(p=>{
+      html += `<li><strong>${p.name}</strong>: Top ${p.top.name} (+${p.top.royalty}), Middle ${p.middle.name} (+${p.middle.royalty}), Bottom ${p.bottom.name} (+${p.bottom.royalty})</li>`;
+    });
+    html +="</ul>";
+
+    document.querySelector("#result").innerHTML = html;
+  }
+
+  document.querySelector("#calc-btn").addEventListener("click", handleCalc);
+})();
+</script>
+</body>
+</html>
