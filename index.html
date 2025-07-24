@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenFace Chinese Poker 点数計算</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>OpenFace Chinese Poker 点数計算</h1>
+        
+        <div class="players-section">
+            <div class="player-input">
+                <h2>プレイヤー数</h2>
+                <select id="playerCount">
+                    <option value="2">2人</option>
+                    <option value="3">3人</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="input-section">
+            <div class="player-card" id="player1">
+                <h3>プレイヤー1</h3>
+                <div class="hand-section">
+                    <div class="hand">
+                        <label>トップ（3枚）:</label>
+                        <input type="text" id="p1-top" placeholder="例: AhKhQh">
+                        <select id="p1-top-hand">
+                            <option value="">役を選択</option>
+                            <option value="three-of-a-kind">スリーカード</option>
+                            <option value="pair">ペア</option>
+                            <option value="high-card">ハイカード</option>
+                        </select>
+                    </div>
+                    <div class="hand">
+                        <label>ミドル（5枚）:</label>
+                        <input type="text" id="p1-middle" placeholder="例: AsKsQsJsTs">
+                        <select id="p1-middle-hand">
+                            <option value="">役を選択</option>
+                            <option value="straight-flush">ストレートフラッシュ</option>
+                            <option value="four-of-a-kind">フォーカード</option>
+                            <option value="full-house">フルハウス</option>
+                            <option value="flush">フラッシュ</option>
+                            <option value="straight">ストレート</option>
+                            <option value="three-of-a-kind">スリーカード</option>
+                            <option value="two-pair">ツーペア</option>
+                            <option value="pair">ペア</option>
+                            <option value="high-card">ハイカード</option>
+                        </select>
+                    </div>
+                    <div class="hand">
+                        <label>ボトム（5枚）:</label>
+                        <input type="text" id="p1-bottom" placeholder="例: AdKdQdJdTd">
+                        <select id="p1-bottom-hand">
+                            <option value="">役を選択</option>
+                            <option value="straight-flush">ストレートフラッシュ</option>
+                            <option value="four-of-a-kind">フォーカード</option>
+                            <option value="full-house">フルハウス</option>
+                            <option value="flush">フラッシュ</option>
+                            <option value="straight">ストレート</option>
+                            <option value="three-of-a-kind">スリーカード</option>
+                            <option value="two-pair">ツーペア</option>
+                            <option value="pair">ペア</option>
+                            <option value="high-card">ハイカード</option>
+                        </select>
+                    </div>
+                    <div class="foul-check">
+                        <label>
+                            <input type="checkbox" id="p1-foul"> ファウル
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="player-card" id="player2">
+                <h3>プレイヤー2</h3>
+                <div class="hand-section">
+                    <div class="hand">
+                        <label>トップ（3枚）:</label>
+                        <input type="text" id="p2-top" placeholder="例: AhKhQh">
+                        <select id="p2-top-hand">
+                            <option value="">役を選択</option>
+                            <option value="three-of-a-kind">スリーカード</option>
+                            <option value="pair">ペア</option>
+                            <option value="high-card">ハイカード</option>
+                        </select>
+                    </div>
+                    <div class="hand">
+                        <label>ミドル（5枚）:</label>
+                        <input type="text" id="p2-middle" placeholder="例: AsKsQsJsTs">
+                        <select id="p2-middle-hand">
+                            <option value="">役を選択</option>
+                            <option value="straight-flush">ストレートフラッシュ</option>
+                            <option value="four-of-a-kind">フォーカード</option>
+                            <option value="full-house">フルハウス</option>
+                            <option value="flush">フラッシュ</option>
+                            <option value="straight">ストレート</option>
+                            <option value="three-of-a-kind">スリーカード</option>
+                            <option value="two-pair">ツーペア</option>
+                            <option value="pair">ペア</option>
+                            <option value="high-card">ハイカード</option>
+                        </select>
+                    </div>
+                    <div class="hand">
+                        <label>ボトム（5枚）:</label>
+                        <input type="text" id="p2-bottom" placeholder="例: AdKdQdJdTd">
+                        <select id="p2-bottom-hand">
+                            <option value="">役を選択</option>
+                            <option value="straight-flush">ストレートフラッシュ</option>
+                            <option value="four-of-a-kind">フォーカード</option>
+                            <option value="full-house">フルハウス</option>
+                            <option value="flush">フラッシュ</option>
+                            <option value="straight">ストレート</option>
+                            <option value="three-of-a-kind">スリーカード</option>
+                            <option value="two-pair">ツーペア</option>
+                            <option value="pair">ペア</option>
+                            <option value="high-card">ハイカード</option>
+                        </select>
+                    </div>
+                    <div class="foul-check">
+                        <label>
+                            <input type="checkbox" id="p2-foul"> ファウル
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="player-card" id="player3" style="display: none;">
+                <h3>プレイヤー3</h3>
+                <div class="hand-section">
+                    <div class="hand">
+                        <label>トップ（3枚）:</label>
+                        <input type="text" id="p3-top" placeholder="例: AhKhQh">
+                        <select id="p3-top-hand">
+                            <option value="">役を選択</option>
+                            <option value="three-of-a-kind">スリーカード</option>
+                            <option value="pair">ペア</option>
+                            <option value="high-card">ハイカード</option>
+                        </select>
+                    </div>
+                    <div class="hand">
+                        <label>ミドル（5枚）:</label>
+                        <input type="text" id="p3-middle" placeholder="例: AsKsQsJsTs">
+                        <select id="p3-middle-hand">
+                            <option value="">役を選択</option>
+                            <option value="straight-flush">ストレートフラッシュ</option>
+                            <option value="four-of-a-kind">フォーカード</option>
+                            <option value="full-house">フルハウス</option>
+                            <option value="flush">フラッシュ</option>
+                            <option value="straight">ストレート</option>
+                            <option value="three-of-a-kind">スリーカード</option>
+                            <option value="two-pair">ツーペア</option>
+                            <option value="pair">ペア</option>
+                            <option value="high-card">ハイカード</option>
+                        </select>
+                    </div>
+                    <div class="hand">
+                        <label>ボトム（5枚）:</label>
+                        <input type="text" id="p3-bottom" placeholder="例: AdKdQdJdTd">
+                        <select id="p3-bottom-hand">
+                            <option value="">役を選択</option>
+                            <option value="straight-flush">ストレートフラッシュ</option>
+                            <option value="four-of-a-kind">フォーカード</option>
+                            <option value="full-house">フルハウス</option>
+                            <option value="flush">フラッシュ</option>
+                            <option value="straight">ストレート</option>
+                            <option value="three-of-a-kind">スリーカード</option>
+                            <option value="two-pair">ツーペア</option>
+                            <option value="pair">ペア</option>
+                            <option value="high-card">ハイカード</option>
+                        </select>
+                    </div>
+                    <div class="foul-check">
+                        <label>
+                            <input type="checkbox" id="p3-foul"> ファウル
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="calculate-section">
+            <button id="calculateBtn">点数計算</button>
+        </div>
+
+        <div class="results-section" id="results" style="display: none;">
+            <h2>計算結果</h2>
+            <div id="scoreResults"></div>
+            <div id="bonusResults"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
